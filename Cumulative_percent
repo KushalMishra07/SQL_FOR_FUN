@@ -43,3 +43,20 @@ VALUES
   (73030, '2020-12-26');
 
   select * from covid_cases;
+
+--Snowflake Query
+
+with cte as (  
+  Select extract(month from report_date) as month, sum(cases_reported) as casesum
+  from covid_cases group by extract(month from report_date)),
+  cte_final as (
+  Select month,casesum,sum(casesum) over (order by month) as totalcase from cte
+  )
+Select 
+month,
+case when month>1 then 
+cast(round(casesum/lag(totalcase) over (order by month)*100,1) as varchar)
+else 
+'-' end as percent_increase 
+from cte_final;  
+
